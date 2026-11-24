@@ -254,7 +254,9 @@ L'interface s'ouvre sur http://localhost:8501.
 | Route | Méthode | Rôle | Réponse |
 |---|---|---|---|
 | `/health` | GET | Vérifie que l'API est en ligne et que le modèle est chargé | `{"status": "ok", "model_loaded": true}` |
-| `/predict` | POST | Analyse un SMS | `{"label": "spam"}` ou `{"label": "légitime"}` |
+| `/predict` | POST | Analyse un SMS | `{"label": "spam", "probability": 0.97}` ou `{"label": "légitime", "probability": 0.88}` |
+
+`probability` est la confiance du modèle dans le `label` renvoyé (entre 0 et 1).
 
 Exemple de requête pour `/predict` :
 
@@ -277,11 +279,25 @@ Exemple de requête pour `/predict` :
 | `MODEL_PATH` | l'API | `models/spam_model.joblib` | Chemin du modèle à charger |
 | `API_URL` | l'interface | `http://localhost:8000` | Adresse de l'API (à changer dans Docker) |
 
+### Lancer les tests
+
+```bash
+pytest
+```
+
+Les tests de l'API sont dans `tests/test_api.py`. Ils utilisent un mini-modèle créé à la volée, donc ils ne dépendent pas de `models/spam_model.joblib`.
+
+Le fichier `models/spam_model.joblib` n'est pas suivi par Git : après un clone, il faut le générer avec `python src/train_model.py` avant de lancer l'API.
+
+Les métriques `models/metrics.json` sont régénérées à chaque exécution de `python src/train_model.py`.
+
 ### Organisation du code
 
 ```
 api/
 └── main.py              # API FastAPI : chargement du modèle, validation, routes
+tests/
+└── test_api.py          # Tests pytest de l'API
 app/
 ├── streamlit_app.py     # Page principale : assemble les éléments
 ├── api_client.py        # Communication avec l'API

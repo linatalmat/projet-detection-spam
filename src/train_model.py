@@ -1,6 +1,7 @@
 #  IMPORTATION DES BIBLIOTHEQUES
 
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -147,6 +148,16 @@ def evaluate_model(name, estimator, X, y):
     print("Colonne 1 : prédiction légitime")
     print("Colonne 2 : prédiction spam")
 
+    # On renvoie les chiffres pour pouvoir les sauvegarder dans metrics.json
+    return {
+        "accuracy": round(float(accuracy), 3),
+        "precision_spam": round(float(precision), 3),
+        "recall_spam": round(float(recall), 3),
+        "f1_score_spam": round(float(f1), 3),
+        "false_positives": int(faux_positifs),
+        "confusion_matrix": matrix.tolist(),
+    }
+
 
 
 #  EVALUATION SUR LES DONNEES DE VALIDATION
@@ -156,14 +167,14 @@ print("\n\n====================================")
 print("EVALUATION SUR LA VALIDATION")
 print("====================================")
 
-evaluate_model(
+validation_baseline = evaluate_model(
     "BASELINE",
     baseline,
     X_validation,
     y_validation
 )
 
-evaluate_model(
+validation_model = evaluate_model(
     "TF-IDF + NAIVE BAYES",
     model,
     X_validation,
@@ -179,19 +190,52 @@ print("\n\n====================================")
 print("EVALUATION FINALE SUR LE TEST")
 print("====================================")
 
-evaluate_model(
+test_baseline = evaluate_model(
     "BASELINE",
     baseline,
     X_test,
     y_test
 )
 
-evaluate_model(
+test_model = evaluate_model(
     "TF-IDF + NAIVE BAYES",
     model,
     X_test,
     y_test
 )
+
+
+#  SAUVEGARDE DES METRIQUES
+
+
+metrics = {
+    "dataset": {
+        "name": "French Spam Text Dataset",
+        "total_sms": len(train_df) + len(validation_df) + len(test_df),
+        "train_samples": len(train_df),
+        "validation_samples": len(validation_df),
+        "test_samples": len(test_df),
+    },
+    "validation": {
+        "baseline": validation_baseline,
+        "tfidf_multinomial_nb": validation_model,
+    },
+    "test": {
+        "baseline": test_baseline,
+        "tfidf_multinomial_nb": test_model,
+    },
+    "confusion_matrix_labels": ["légitime", "spam"],
+}
+
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+metrics_path = MODEL_DIR / "metrics.json"
+
+with open(metrics_path, "w", encoding="utf-8") as f:
+    json.dump(metrics, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+
+print("\nMétriques sauvegardées dans :", metrics_path)
 
 
 
