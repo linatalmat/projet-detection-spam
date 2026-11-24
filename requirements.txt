@@ -1,0 +1,19 @@
+# --- API (Dev 1) ---
+fastapi
+uvicorn
+pydantic
+
+# --- Interface (Dev 1) ---
+streamlit
+requests
+pandas
+altair
+numpy
+
+# --- Modèle (Data 2) ---
+scikit-learn
+joblib
+
+# --- Tests (Dev 2) ---
+pytest
+httpx
