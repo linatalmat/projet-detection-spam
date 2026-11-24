@@ -10,7 +10,7 @@ import streamlit as st
 
 from style import ROUGE, VERT
 
-DATA_PATH = Path("data/sms_clean.csv")  # fourni par Data 1
+DATA_PATH = Path("data/processed/sms_clean.csv")  # fourni par Data 1
 
 MOTS_VIDES = {
     "the", "you", "and", "for", "your", "are", "have", "with", "this", "that",
