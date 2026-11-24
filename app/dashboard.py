@@ -12,9 +12,15 @@ from style import ROUGE, VERT
 
 DATA_PATH = Path("data/processed/sms_clean.csv")  # fourni par Data 1
 
+# Les labels peuvent être écrits de plusieurs façons : on les ramène tous à "légitime"
+TRADUCTION = {"legitimate": "légitime", "legitime": "légitime", "ham": "légitime"}
+
+# Petits mots sans intérêt, retirés du graphique des mots fréquents
+# (les mots de moins de 3 lettres comme "le", "de", "un" sont déjà ignorés)
 MOTS_VIDES = {
-    "the", "you", "and", "for", "your", "are", "have", "with", "this", "that",
-    "from", "now", "has", "can", "not", "will", "our", "all", "get", "its",
+    "les", "des", "une", "est", "pour", "vous", "votre", "vos", "sur", "par",
+    "avec", "dans", "qui", "que", "pas", "aux", "ces", "son", "ses", "nous",
+    "elle", "mais", "plus", "tout", "été", "avant", "cette",
 }
 
 
@@ -22,6 +28,8 @@ MOTS_VIDES = {
 def charger_donnees():
     if DATA_PATH.exists():
         df = pd.read_csv(DATA_PATH)
+        # On traduit les labels pour l'affichage (le fichier de Data 1 n'est pas modifié)
+        df["label"] = df["label"].replace(TRADUCTION)
         df["longueur"] = df["text"].str.len()
         mots = Counter()
         for texte in df.loc[df["label"] == "spam", "text"]:
@@ -57,6 +65,12 @@ def afficher_dashboard():
     comptes, top_mots, longueurs, vraies_donnees = charger_donnees()
 
     st.header(":material/monitoring: Tableau de bord")
+    # Petite ligne grise qui indique d'où viennent les chiffres
+    if vraies_donnees:
+        st.caption(f"Source : `{DATA_PATH.as_posix()}` · données réelles")
+    else:
+        st.caption(f"Source : données d'exemple (fichier `{DATA_PATH.as_posix()}` introuvable)")
+
     # --- Les chiffres clés ---
     total = int(comptes.sum())
     part_spam = comptes.get("spam", 0) / total
