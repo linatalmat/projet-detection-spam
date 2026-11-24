@@ -215,7 +215,85 @@ Le modèle est sauvegardé et prêt à être intégré dans l'application.
 
 ## 3. Partie Application
 
-À compléter.
+## Application : API + interface (Dev 1)
+
+### Installation
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate      # Windows (Git Bash)
+# source .venv/bin/activate        # Mac / Linux
+pip install -r requirements.txt
+```
+
+### Lancement
+
+Ouvrir **deux terminaux** à la racine du projet.
+
+**Terminal 1 : l'API**
+
+```bash
+uvicorn api.main:app --reload
+```
+
+Au démarrage, le terminal doit afficher `Modèle chargé depuis models/spam_model.joblib`.
+
+- Vérifier que l'API tourne : http://localhost:8000/health
+- Documentation interactive : http://localhost:8000/docs
+
+**Terminal 2 : l'interface**
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+L'interface s'ouvre sur http://localhost:8501.
+
+### Les routes de l'API
+
+| Route | Méthode | Rôle | Réponse |
+|---|---|---|---|
+| `/health` | GET | Vérifie que l'API est en ligne et que le modèle est chargé | `{"status": "ok", "model_loaded": true}` |
+| `/predict` | POST | Analyse un SMS | `{"label": "spam"}` ou `{"label": "légitime"}` |
+
+Exemple de requête pour `/predict` :
+
+```json
+{"text": "Félicitations, vous avez gagné un bon d'achat de 500 euros. Cliquez ici pour le récupérer."}
+```
+
+### Validation et erreurs
+
+| Code | Quand |
+|---|---|
+| **200** | Le SMS est valide et a été analysé |
+| **422** | `text` manquant, vide, composé uniquement d'espaces, de plus de 1000 caractères, ou qui n'est pas du texte |
+| **503** | Le modèle n'a pas pu être chargé au démarrage |
+
+### Variables d'environnement
+
+| Variable | Utilisée par | Valeur par défaut | Rôle |
+|---|---|---|---|
+| `MODEL_PATH` | l'API | `models/spam_model.joblib` | Chemin du modèle à charger |
+| `API_URL` | l'interface | `http://localhost:8000` | Adresse de l'API (à changer dans Docker) |
+
+### Organisation du code
+
+```
+api/
+└── main.py              # API FastAPI : chargement du modèle, validation, routes
+app/
+├── streamlit_app.py     # Page principale : assemble les éléments
+├── api_client.py        # Communication avec l'API
+├── dashboard.py         # Tableau de bord (statistiques sur les données)
+├── contenu.py           # Textes : conseils, exemples de SMS
+└── style.py             # Style (CSS) et icônes
+```
+
+### Limite connue
+
+Le modèle obtient 100 % sur le jeu de test, car le jeu de données français est **synthétique** : les SMS légitimes sont surtout des messages formels (confirmations de rendez-vous, notifications…). Face à un SMS du quotidien comme « Salut, on se retrouve à 18h ? », il se trompe et le classe en spam. Pour l'améliorer, il faudrait l'entraîner aussi sur de vrais SMS personnels.
+
 
 ## 4. Partie DevOps
 
