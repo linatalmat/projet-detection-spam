@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  train_model:
+    name: Entraîner le modèle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: python -m pip install -r requirements.txt
+
+      # Génère models/spam_model.joblib et models/metrics.json
+      - run: python src/train_model.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: |
+            models/spam_model.joblib
+            models/metrics.json
+          retention-days: 7
+
+  test_api:
+    name: Tester l'API
+    runs-on: ubuntu-latest
+    needs: train_model
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: python -m pip install -r requirements.txt
+
+      # Récupère le modèle produit par le job précédent
+      - uses: actions/download-artifact@v4
+        with:
+          name: model
+          path: models
+
+      - run: python -m pytest -q --junitxml=junit.xml
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit
+          path: junit.xml
+          retention-days: 7
