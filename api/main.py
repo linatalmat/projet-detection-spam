@@ -63,7 +63,14 @@ def predict(sms: SMS):
         raise HTTPException(status_code=503, detail="Le modèle n'est pas chargé")
 
     # Le modèle attend une LISTE de textes : on lui donne [le SMS] et on prend la 1re réponse
-    label = str(model.predict([sms.text])[0])
+    # predict_proba donne une probabilité par classe (dans l'ordre de model.classes_)
+    probabilites = model.predict_proba([sms.text])[0]
+    indice = int(probabilites.argmax())
+    label = str(model.classes_[indice])
 
     # On traduit si besoin ("legitimate" → "légitime")
-    return {"label": TRADUCTION.get(label, label)}
+    # "probability" = confiance du modèle dans le label renvoyé (entre 0 et 1)
+    return {
+        "label": TRADUCTION.get(label, label),
+        "probability": round(float(probabilites[indice]), 4),
+    }
