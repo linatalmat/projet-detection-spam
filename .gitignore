@@ -2,3 +2,4 @@
 __pycache__
 .idea/
 models/spam_model.joblib
+models/metrics.json
