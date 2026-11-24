@@ -1,0 +1,6 @@
+# Dépendances de l'API et du modèle
+fastapi
+uvicorn
+pydantic
+scikit-learn
+joblib

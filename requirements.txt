@@ -1,19 +1,10 @@
-# --- API (Dev 1) ---
-fastapi
-uvicorn
-pydantic
+# Développement local : tout installer (pip install -r requirements.txt)
+-r requirements-api.txt
+-r requirements-ui.txt
 
-# --- Interface (Dev 1) ---
-streamlit
-requests
+# --- Entraînement ---
 pandas
-altair
-numpy
 
-# --- Modèle (Data 2) ---
-scikit-learn
-joblib
-
-# --- Tests (Dev 2) ---
+# --- Tests ---
 pytest
 httpx

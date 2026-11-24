@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+
+COPY requirements-ui.txt .
+RUN python -m pip install -r requirements-ui.txt
+
+COPY app ./app
+# Le dashboard lit ce fichier pour ses statistiques
+COPY data/processed/sms_clean.csv data/processed/sms_clean.csv
+
+# L'adresse de l'API se règle avec API_URL (voir docker-compose.yml)
+ENV API_URL=http://api:8000
+
+EXPOSE 8501
+
+CMD ["python", "-m", "streamlit", "run", "app/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501"]

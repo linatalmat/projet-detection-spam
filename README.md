@@ -279,6 +279,19 @@ Exemple de requête pour `/predict` :
 | `MODEL_PATH` | l'API | `models/spam_model.joblib` | Chemin du modèle à charger |
 | `API_URL` | l'interface | `http://localhost:8000` | Adresse de l'API (à changer dans Docker) |
 
+### Lancer avec Docker
+
+```bash
+docker compose up --build
+```
+
+- API : http://localhost:8000 (documentation sur `/docs`)
+- Interface : http://localhost:8501
+
+L'image de l'API entraîne le modèle pendant le build (`src/train_model.py`), donc il n'est pas nécessaire d'avoir `models/spam_model.joblib` en local. L'interface joint l'API grâce à la variable `API_URL`, réglée sur `http://api:8000` dans `docker-compose.yml`.
+
+Fichiers : `Dockerfile.api`, `Dockerfile.ui`, `docker-compose.yml`, `.dockerignore`. Les dépendances sont séparées en `requirements-api.txt` et `requirements-ui.txt` pour alléger les images ; `requirements.txt` les regroupe pour le développement local.
+
 ### Lancer les tests
 
 ```bash

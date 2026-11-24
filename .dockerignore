@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+
+# Pas nécessaires dans les images
+notebooks
+docs
+tests
+data/messages.csv
+
+# Le modèle est régénéré pendant le build de l'image de l'API
+models

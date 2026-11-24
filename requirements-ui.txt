@@ -1,0 +1,6 @@
+# Dépendances de l'interface Streamlit
+streamlit
+requests
+pandas
+altair
+numpy
