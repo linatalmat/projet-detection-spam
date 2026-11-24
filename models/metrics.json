@@ -1,0 +1,47 @@
+
+{
+  "dataset": {
+    "name": "French Spam Text Dataset",
+    "total_sms": 5000,
+    "train_samples": 3167,
+    "validation_samples": 917,
+    "test_samples": 916
+  },
+  "validation": {
+    "baseline": {
+      "accuracy": 0.455,
+      "precision_spam": 0.455,
+      "recall_spam": 1.0,
+      "f1_score_spam": 0.625,
+      "false_positives": 500,
+      "confusion_matrix": [[0, 500], [0, 417]]
+    },
+    "tfidf_multinomial_nb": {
+      "accuracy": 1.0,
+      "precision_spam": 1.0,
+      "recall_spam": 1.0,
+      "f1_score_spam": 1.0,
+      "false_positives": 0,
+      "confusion_matrix": [[500, 0], [0, 417]]
+    }
+  },
+  "test": {
+    "baseline": {
+      "accuracy": 0.454,
+      "precision_spam": 0.454,
+      "recall_spam": 1.0,
+      "f1_score_spam": 0.625,
+      "false_positives": 500,
+      "confusion_matrix": [[0, 500], [0, 416]]
+    },
+    "tfidf_multinomial_nb": {
+      "accuracy": 1.0,
+      "precision_spam": 1.0,
+      "recall_spam": 1.0,
+      "f1_score_spam": 1.0,
+      "false_positives": 0,
+      "confusion_matrix": [[500, 0], [0, 416]]
+    }
+  },
+  "confusion_matrix_labels": ["legitime", "spam"]
+}
