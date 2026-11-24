@@ -10,9 +10,9 @@ Objectif : classer un SMS en français comme **spam** ou **légitime**.
 | Partie | Contenu | Responsable |
 |---|---|---|
 | Données | Chargement, nettoyage et export du jeu de données | Dylan RAMI |
-| Modèle | Baseline et modèle scikit-learn (TF-IDF + MultinomialNB) | À compléter |
-| Application | API FastAPI (/health, /predict) et interface Streamlit | À compléter |
-| DevOps | Git, pytest, Docker Compose, GitLab CI | À compléter |
+| Modèle | Baseline et modèle scikit-learn (TF-IDF + MultinomialNB) | Lina TALMAT |
+| Application | API FastAPI (/health, /predict) et interface Streamlit | GOUASMIA SIFEDDINE |
+| DevOps | Git, pytest, Docker Compose, GitHub Actions | Roland DANSOU |
 
 ## Structure du dépôt
 
@@ -226,11 +226,31 @@ source .venv/Scripts/activate      # Windows (Git Bash)
 pip install -r requirements.txt
 ```
 
-### Lancement
+### Dérouler et tester le projet
 
-Ouvrir **deux terminaux** à la racine du projet.
+Deux façons de faire tourner le projet. Dans les deux cas, le modèle `models/spam_model.joblib` n'est pas suivi par Git : il faut l'entraîner (sans Docker) ou laisser Docker le faire pendant le build.
 
-**Terminal 1 : l'API**
+#### Sans Docker
+
+Après l'installation ci-dessus, depuis la racine du projet :
+
+**1. Entraîner le modèle** (à faire une fois, et à chaque changement des données)
+
+```bash
+python src/train_model.py
+```
+
+Cela crée `models/spam_model.joblib` et `models/metrics.json`.
+
+**2. Lancer les tests**
+
+```bash
+pytest
+```
+
+Les tests de l'API utilisent un mini-modèle : ils passent même sans l'étape 1.
+
+**3. Lancer l'API** (terminal 1)
 
 ```bash
 uvicorn api.main:app --reload
@@ -238,16 +258,58 @@ uvicorn api.main:app --reload
 
 Au démarrage, le terminal doit afficher `Modèle chargé depuis models/spam_model.joblib`.
 
-- Vérifier que l'API tourne : http://localhost:8000/health
-- Documentation interactive : http://localhost:8000/docs
-
-**Terminal 2 : l'interface**
+**4. Lancer l'interface** (terminal 2)
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
 
-L'interface s'ouvre sur http://localhost:8501.
+**5. Vérifier à la main**
+
+- Santé de l'API : http://localhost:8000/health doit répondre `{"status":"ok","model_loaded":true}`
+- Documentation interactive : http://localhost:8000/docs (bouton « Try it out » sur `/predict`)
+- Prédiction en ligne de commande :
+
+```bash
+curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" -d '{"text": "Cadeau gratuit, cliquez ici"}'
+```
+
+La réponse ressemble à `{"label":"spam","probability":0.98}`.
+
+- Interface : http://localhost:8501, colle un SMS ou clique sur un exemple, puis « Analyser le SMS ».
+
+#### Avec Docker
+
+Il faut seulement Docker : pas besoin de Python, de l'environnement virtuel ni d'entraîner le modèle.
+
+**1. Construire et lancer** (l'image de l'API entraîne le modèle pendant le build)
+
+```bash
+docker compose up --build
+```
+
+**2. Vérifier** : les mêmes adresses que sans Docker (l'API sur http://localhost:8000, l'interface sur http://localhost:8501), et la même commande `curl`.
+
+```bash
+docker compose ps               # l'API doit être "healthy"
+docker compose logs -f api      # suivre les logs de l'API
+```
+
+**3. Lancer les tests dans un conteneur** (optionnel, l'image de l'API n'embarque pas pytest : on utilise une image temporaire)
+
+```bash
+docker run --rm -v "$(pwd):/app" -w /app python:3.12-slim sh -c "pip install -q -r requirements.txt && pytest"
+```
+
+Sous PowerShell, remplace `$(pwd)` par `${PWD}`.
+
+**4. Arrêter**
+
+```bash
+docker compose down
+```
+
+Détails des images, des ports et de la CI : voir la [partie 4 (DevOps)](#4-partie-devops).
 
 ### Les routes de l'API
 
@@ -279,30 +341,10 @@ Exemple de requête pour `/predict` :
 | `MODEL_PATH` | l'API | `models/spam_model.joblib` | Chemin du modèle à charger |
 | `API_URL` | l'interface | `http://localhost:8000` | Adresse de l'API (à changer dans Docker) |
 
-### Lancer avec Docker
+### Notes
 
-```bash
-docker compose up --build
-```
-
-- API : http://localhost:8000 (documentation sur `/docs`)
-- Interface : http://localhost:8501
-
-L'image de l'API entraîne le modèle pendant le build (`src/train_model.py`), donc il n'est pas nécessaire d'avoir `models/spam_model.joblib` en local. L'interface joint l'API grâce à la variable `API_URL`, réglée sur `http://api:8000` dans `docker-compose.yml`.
-
-Fichiers : `Dockerfile.api`, `Dockerfile.ui`, `docker-compose.yml`, `.dockerignore`. Les dépendances sont séparées en `requirements-api.txt` et `requirements-ui.txt` pour alléger les images ; `requirements.txt` les regroupe pour le développement local.
-
-### Lancer les tests
-
-```bash
-pytest
-```
-
-Les tests de l'API sont dans `tests/test_api.py`. Ils utilisent un mini-modèle créé à la volée, donc ils ne dépendent pas de `models/spam_model.joblib`.
-
-Le fichier `models/spam_model.joblib` n'est pas suivi par Git : après un clone, il faut le générer avec `python src/train_model.py` avant de lancer l'API.
-
-Les métriques `models/metrics.json` sont régénérées à chaque exécution de `python src/train_model.py`.
+- `models/spam_model.joblib` n'est pas suivi par Git : après un clone, il faut le générer avec `python src/train_model.py` (ou passer par Docker).
+- `models/metrics.json` n'est pas suivi par Git non plus : il est régénéré à chaque exécution de `python src/train_model.py`.
 
 ### Organisation du code
 
@@ -326,4 +368,55 @@ Le modèle obtient 100 % sur le jeu de test, car le jeu de données français es
 
 ## 4. Partie DevOps
 
-À compléter.
+### Docker
+
+Chaque service a son image :
+
+| Fichier | Rôle | Port |
+|---|---|---|
+| `Dockerfile.api` | API FastAPI. Build en deux étapes : la première entraîne le modèle (`src/train_model.py`), la seconde ne garde que l'API et `spam_model.joblib`. | 8000 |
+| `Dockerfile.ui` | Interface Streamlit et dashboard (`app/` et `data/processed/sms_clean.csv`) | 8501 |
+| `docker-compose.yml` | Lance les deux services sur le réseau `spam-net` | |
+| `.dockerignore` | Exclut `.venv`, `.git`, `notebooks`, `tests`, `models/`, etc. | |
+
+Le modèle n'est pas suivi par Git : il est entraîné pendant le build de l'image de l'API, donc il n'est pas nécessaire de l'avoir en local.
+
+Les dépendances sont séparées pour alléger les images : `requirements-api.txt` (API et modèle) et `requirements-ui.txt` (interface). `requirements.txt` les regroupe avec pytest pour le développement local.
+
+#### Lancer en local
+
+```bash
+docker compose up --build
+```
+
+| Service | Mapping | Adresse |
+|---|---|---|
+| `api` | `8000:8000` | http://localhost:8000 (documentation sur `/docs`) |
+| `ui` | `8501:8501` | http://localhost:8501 |
+
+Le mapping de ports (`hôte:conteneur`) sert uniquement à joindre un service depuis ta machine. Entre les conteneurs, l'interface contacte l'API par le réseau `spam-net` avec `http://api:8000` (variable `API_URL`). Si un port est déjà pris, change seulement le côté gauche, par exemple `"8080:8000"`.
+
+Quelques commandes utiles :
+
+```bash
+docker compose up --build api   # lancer l'API seule
+docker compose logs -f api      # suivre les logs
+docker compose down             # tout arrêter
+```
+
+L'API a un healthcheck sur `/health` : l'interface ne démarre que lorsque l'API est prête.
+
+### Intégration continue (GitHub Actions)
+
+Le workflow `.github/workflows/ci.yml` se lance sur chaque pull request vers `main`. Il comporte deux jobs :
+
+1. `train_model` : installe les dépendances, entraîne le modèle (`python src/train_model.py`) et publie `spam_model.joblib` et `metrics.json` en artefact (conservé 7 jours).
+2. `test_api` : attend le premier job, récupère le modèle, lance `pytest` et publie le rapport `junit.xml`, même en cas d'échec.
+
+### Tests
+
+```bash
+pytest
+```
+
+Les tests de l'API (`tests/test_api.py`) utilisent un mini-modèle créé à la volée : ils ne dépendent pas de `models/spam_model.joblib`.
