@@ -16,8 +16,10 @@ CONSEILS_LEGITIME = [
 
 # Chaque exemple = (texte du bouton, icône, SMS)
 EXEMPLES = [
-    ("Exemple spam", ":material/report:", "WINNER! You have won a FREE iPhone. Claim your prize now: call 0800 123 456"),
-    ("Exemple normal", ":material/chat:", "Hey, are we still meeting at 6 for the project?"),
+    ("Exemple spam", ":material/report:",
+     "Félicitations, vous avez gagné un bon d'achat de 500 euros. Cliquez ici pour le récupérer."),
+    ("Exemple normal", ":material/chat:",
+     "Votre rendez-vous est confirmé pour demain à 10h."),
 ]
 
 # Les signes d'un spam, affichés dans la barre latérale
